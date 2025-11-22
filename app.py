@@ -9,41 +9,45 @@ import textwrap
 # --- 1. ตั้งค่าหน้าเว็บ ---
 st.set_page_config(page_title="Coach Kung: CS Calculator", page_icon="🏃‍♂️")
 
-# --- ฟังก์ชันเสริม: วาดรูป JPG (จัดหน้าใหม่ A4) ---
+# --- ฟังก์ชันเสริม: วาดรูป JPG (จัด Layout A4 แบบห่างๆ) ---
 def create_image_card(student_name, test_date, cs, dp, runner_type, zones_df, advice_text):
     # 1. ตั้งค่ากระดาษ A4 (8.27 x 11.69 นิ้ว)
-    fig, ax = plt.subplots(figsize=(8.27, 11.69)) 
-    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-    ax.axis('off')
+    fig, ax = plt.subplots(figsize=(8.27, 11.69))
+    
+    # ลบขอบขาวรอบรูปทิ้งให้หมด เพื่อให้ใช้พื้นที่ได้เต็ม A4
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
+    ax.axis('off') # ปิดแกน
 
     # 2. โหลดฟอนต์ไทย
     try:
-        title_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=30, weight='bold')
+        title_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=32, weight='bold')
         header_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=24, weight='bold')
         normal_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=20)
-        small_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=16)
+        small_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=16) # ลดขนาดฟอนต์ตาราง
     except:
         st.warning("⚠️ ไม่พบฟอนต์ THSarabunNew.ttf")
         return None
 
     # --- ส่วนที่ 1: Header (บนสุด) ---
-    plt.text(0.5, 0.93, "รายงานผลการทดสอบ: Critical Speed Profile", ha='center', fontproperties=title_font, color='#2c3e50')
-    plt.text(0.5, 0.89, f"นักกีฬา: {student_name} | วันที่: {str(test_date)}", ha='center', fontproperties=header_font, color='#7f8c8d')
-    plt.plot([0.1, 0.87], [0.87, 0.87], color='#bdc3c7', lw=2)
+    # ขยับขึ้นไปที่ y=1.0 เพื่อให้ชิดขอบบนสุด
+    plt.text(0.5, 0.96, "รายงานผลการทดสอบ: Critical Speed Profile", ha='center', fontproperties=title_font, color='#2c3e50')
+    plt.text(0.5, 0.92, f"นักกีฬา: {student_name} | วันที่: {str(test_date)}", ha='center', fontproperties=header_font, color='#7f8c8d')
+    plt.plot([0.1, 0.9], [0.90, 0.90], color='#bdc3c7', lw=2)
 
-    # --- ส่วนที่ 2: Metrics (ใต้ Header) ---
-    plt.text(0.1, 0.83, "1. Physiological Metrics (ค่าสมรรถภาพ)", fontproperties=header_font, color='#2980b9')
+    # --- ส่วนที่ 2: Metrics (ขยับขึ้นหนีตาราง) ---
+    plt.text(0.05, 0.86, "1. Physiological Metrics (ค่าสมรรถภาพ)", fontproperties=header_font, color='#2980b9')
     metrics_text = (
         f"• Critical Speed (CS): {cs:.2f} m/s\n"
         f"• Anaerobic Capacity (D'): {dp:.0f} m\n"
         f"• Runner Type: {runner_type}"
     )
-    plt.text(0.12, 0.74, metrics_text, fontproperties=normal_font, va='top', linespacing=1.6)
+    # วางข้อความ Metrics (y=0.82)
+    plt.text(0.08, 0.82, metrics_text, fontproperties=normal_font, va='top', linespacing=1.6)
 
-    # --- ส่วนที่ 3: ตาราง (ตรงกลาง) ---
-    plt.text(0.1, 0.63, "2. Training Zones (โซนซ้อม)", fontproperties=header_font, color='#2980b9')
+    # --- ส่วนที่ 3: ตาราง (หัวใจสำคัญ - ขยับตำแหน่ง) ---
+    plt.text(0.05, 0.65, "2. Training Zones (โซนซ้อม)", fontproperties=header_font, color='#2980b9')
     
-    # *แก้ปัญหา Emoji เป็นสี่เหลี่ยม*: ลบ Emoji ออกเฉพาะตอนวาดกราฟ
+    # เคลียร์ Emoji ออกเพื่อกันสี่เหลี่ยม
     plot_df = zones_df.copy()
     plot_df['Zone'] = plot_df['Zone'].str.replace('⚠️', '').str.replace('📍', '')
     plot_df['Pace Range (min/km)'] = plot_df['Pace Range (min/km)'].str.replace('📍', '')
@@ -54,36 +58,38 @@ def create_image_card(student_name, test_date, cs, dp, runner_type, zones_df, ad
     
     col_labels = ["Zone", "Intensity", "Pace", "Objective"]
     
-    # จัดตำแหน่งตาราง (bbox=[left, bottom, width, height])
-    # ปรับ bottom=0.35 เพื่อให้ตารางอยู่ตรงกลางหน้าพอดี ไม่ทับส่วนล่าง
+    # bbox=[left, bottom, width, height]
+    # **แก้ตรงนี้:** ดันตารางให้สูงขึ้น (bottom=0.38) เพื่อหนีคำแนะนำด้านล่าง
     table = plt.table(cellText=cell_text, colLabels=col_labels, 
                       loc='center', cellLoc='left', colLoc='center',
-                      bbox=[0.1, 0.35, 0.8, 0.25]) 
+                      bbox=[0.05, 0.38, 0.9, 0.25]) 
     
     table.auto_set_font_size(False)
-    table.set_fontsize(14)
+    table.set_fontsize(14) # ลดขนาดฟอนต์ในตารางลง
     
     for key, cell in table.get_celld().items():
         cell.set_text_props(fontproperties=small_font)
         cell.set_edgecolor('#bdc3c7')
+        # ปรับความสูงแถว
+        cell.set_height(0.04)
         if key[0] == 0:
             cell.set_text_props(fontproperties=header_font, color='white')
             cell.set_facecolor('#2980b9')
-            cell.set_height(0.04)
 
-    # --- ส่วนที่ 4: คำแนะนำ (ด้านล่าง) ---
-    plt.text(0.1, 0.28, "3. Coach's Advice (คำแนะนำ)", fontproperties=header_font, color='#2980b9')
+    # --- ส่วนที่ 4: คำแนะนำ (ขยับลงต่ำ) ---
+    # เริ่มที่ y=0.30 (ต่ำกว่าตารางที่มี bottom=0.38)
+    plt.text(0.05, 0.32, "3. Coach's Advice (คำแนะนำ)", fontproperties=header_font, color='#2980b9')
     
-    wrapper = textwrap.TextWrapper(width=65)
+    wrapper = textwrap.TextWrapper(width=70)
     wrapped_advice = wrapper.fill(text=advice_text)
-    # วางข้อความที่ตำแหน่ง y=0.24 (ใต้หัวข้อคำแนะนำ)
-    plt.text(0.12, 0.24, wrapped_advice, fontproperties=normal_font, va='top', linespacing=1.4)
+    plt.text(0.08, 0.28, wrapped_advice, fontproperties=normal_font, va='top', linespacing=1.4)
 
-    # --- ส่วนที่ 5: Footer (ล่างสุด) ---
-    plt.text(0.9, 0.03, "Designed by Coach Kung", ha='right', fontproperties=small_font, color='#95a5a6', style='italic')
+    # --- ส่วนที่ 5: Footer ---
+    plt.text(0.95, 0.02, "Designed by Coach Kung", ha='right', fontproperties=small_font, color='#95a5a6', style='italic')
 
     img_buffer = io.BytesIO()
-    plt.savefig(img_buffer, format='jpg', dpi=150)
+    # สำคัญ: ไม่ใช้ bbox_inches='tight' เพื่อรักษาขนาด A4
+    plt.savefig(img_buffer, format='jpg', dpi=150) 
     img_buffer.seek(0)
     return img_buffer
 
