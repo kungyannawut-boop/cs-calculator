@@ -130,13 +130,13 @@ if calculate_btn:
         st.subheader("🎯 โซนซ้อมแนะนำ")
         
         zones_data = [
-            ["Zone 1 Recovery", "< 70%", f"> {get_pace(cs*0.70)}", "คลายกรด"],
-            ["Zone 2 Easy", "70-80%", f"{get_pace(cs*0.70)} - {get_pace(cs*0.80)}", "Aerobic Base"],
-            ["Zone 3 Steady", "80-90%", f"{get_pace(cs*0.80)} - {get_pace(cs*0.90)}", "Marathon Pace"],
-            ["Zone 4 Threshold", "90-100%", f"{get_pace(cs*0.90)} - {get_pace(cs*1.00)}", "Tempo"],
-            ["⚠️ CS Line", "100%", f"📍 {cs_pace}", "Red Line"],
-            ["Zone 5 VO2max", "100-110%", f"{get_pace(cs*1.00)} - {get_pace(cs*1.10)}", "Interval"],
-            ["Zone 6 Anaerobic", "> 110%", f"< {get_pace(cs*1.10)}", "Speed"]
+            ["Zone 1 Recovery", "< 70%", f"> {get_pace(cs*0.70)}", "คลายกรด / Active Rest"],
+            ["Zone 2 Easy", "70-80%", f"{get_pace(cs*0.70)} - {get_pace(cs*0.80)}", "สร้างฐาน Aerobic"],
+            ["Zone 3 Steady", "80-90%", f"{get_pace(cs*0.80)} - {get_pace(cs*0.90)}", "ความทนทาน / Marathon Pace"],
+            ["Zone 4 Threshold", "90-100%", f"{get_pace(cs*0.90)} - {get_pace(cs*1.00)}", "Tempo / ดันเพดานความเหนื่อย"],
+            ["⚠️ CS Line", "100%", f"📍 {cs_pace}", "ขีดจำกัดร่างกาย / Red Line"],
+            ["Zone 5 VO2max", "100-110%", f"{get_pace(cs*1.00)} - {get_pace(cs*1.10)}", "Interval / กระตุ้นหัวใจ"],
+            ["Zone 6 Anaerobic", "> 110%", f"< {get_pace(cs*1.10)}", "Speed / พัฒนาความเร็วสูงสุด"]
         ]
         df_zones = pd.DataFrame(zones_data, columns=["Zone", "Intensity", "Pace Range (min/km)", "Objective"])
         st.table(df_zones)
@@ -160,3 +160,4 @@ if calculate_btn:
     except ZeroDivisionError:
         st.error("Error: เวลาทดสอบต้องไม่เท่ากัน")
 st.info("👈 กรุณากรอกข้อมูลที่แถบด้านซ้าย แล้วกดปุ่ม 'คำนวณผลลัพธ์'")
+
