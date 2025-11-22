@@ -1,11 +1,90 @@
 import streamlit as st
 import pandas as pd
 from fpdf import FPDF
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+import io
+import textwrap
 
 # --- 1. ตั้งค่าหน้าเว็บ ---
 st.set_page_config(page_title="Coach Kung: CS Calculator", page_icon="🏃‍♂️")
 
-# --- 2. ฟังก์ชันสร้าง PDF (เพิ่ม Footer) ---
+# --- ฟังก์ชันเสริม: วาดรูป JPG (เพิ่มใหม่) ---
+def create_image_card(student_name, test_date, cs, dp, runner_type, zones_df, advice_text):
+    # 1. ตั้งค่ากระดาษวาดรูป (แนวตั้ง)
+    fig, ax = plt.subplots(figsize=(10, 14))
+    ax.axis('off') # ปิดแกน X Y
+
+    # 2. โหลดฟอนต์ไทย (ใช้ THSarabunNew.ttf ตัวเดียวกับ PDF)
+    try:
+        # ฟอนต์หัวข้อ (หนา/ใหญ่)
+        title_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=30, weight='bold')
+        header_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=24, weight='bold')
+        normal_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=20)
+        small_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=16)
+    except:
+        st.warning("⚠️ ไม่พบฟอนต์ THSarabunNew.ttf (รูปภาพอาจไม่มีภาษาไทย)")
+        return None
+
+    # 3. วาดส่วนหัว (Header)
+    plt.text(0.5, 0.95, "รายงานผลการทดสอบ: Critical Speed Profile", ha='center', fontproperties=title_font, color='#2c3e50')
+    plt.text(0.5, 0.91, f"นักกีฬา: {student_name} | วันที่: {str(test_date)}", ha='center', fontproperties=header_font, color='#7f8c8d')
+    plt.plot([0.1, 0.9], [0.89, 0.89], color='#bdc3c7', lw=3) # เส้นขีดคั่น
+
+    # 4. วาดค่า Metrics
+    plt.text(0.1, 0.85, "1. Physiological Metrics (ค่าสมรรถภาพ)", fontproperties=header_font, color='#2980b9')
+    metrics_text = (
+        f"• Critical Speed (CS): {cs:.2f} m/s\n"
+        f"• Anaerobic Capacity (D'): {dp:.0f} m\n"
+        f"• Runner Type: {runner_type}"
+    )
+    plt.text(0.12, 0.75, metrics_text, fontproperties=normal_font, va='top', linespacing=1.8)
+
+    # 5. วาดตารางโซนซ้อม
+    plt.text(0.1, 0.62, "2. Training Zones (โซนซ้อม)", fontproperties=header_font, color='#2980b9')
+    
+    # เตรียมข้อมูลลงตาราง
+    cell_text = []
+    for i, row in zones_df.iterrows():
+        cell_text.append([row['Zone'], row['Intensity'], row['Pace Range (min/km)'], row['Objective']])
+    
+    col_labels = ["Zone", "Intensity", "Pace", "Objective"]
+    
+    # สร้างตาราง
+    table = plt.table(cellText=cell_text, colLabels=col_labels, 
+                      loc='center', cellLoc='left', colLoc='center',
+                      bbox=[0.1, 0.28, 0.8, 0.32]) # [left, bottom, width, height]
+    
+    table.auto_set_font_size(False)
+    table.set_fontsize(14)
+    
+    # ปรับฟอนต์ในตารางให้เป็นไทย
+    for key, cell in table.get_celld().items():
+        cell.set_text_props(fontproperties=small_font)
+        if key[0] == 0: # หัวตาราง
+            cell.set_text_props(fontproperties=header_font, color='white')
+            cell.set_facecolor('#2980b9')
+            cell.set_height(0.05)
+
+    # 6. วาดคำแนะนำโค้ช
+    plt.text(0.1, 0.22, "3. Coach's Advice (คำแนะนำ)", fontproperties=header_font, color='#2980b9')
+    
+    # ตัดคำให้อยู่ในบรรทัด (Wrap text)
+    wrapper = textwrap.TextWrapper(width=75)
+    wrapped_advice = wrapper.fill(text=advice_text)
+    plt.text(0.12, 0.18, wrapped_advice, fontproperties=normal_font, va='top', linespacing=1.5)
+
+    # 7. Footer (Designed by Coach Kung)
+    plt.text(0.9, 0.02, "Designed by Coach Kung", ha='right', fontproperties=small_font, color='#95a5a6', style='italic')
+
+    # 8. Save ลง Buffer
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format='jpg', dpi=150, bbox_inches='tight')
+    img_buffer.seek(0)
+    return img_buffer
+
+
+# --- 2. ฟังก์ชันสร้าง PDF (ของเดิมที่คุณให้มา) ---
 def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_text):
     
     # สร้าง Custom Class เพื่อทำ Footer (สิ่งที่เพิ่มมาใหม่)
@@ -182,19 +261,35 @@ if calculate_btn:
         df_zones = pd.DataFrame(zones_data, columns=["Zone", "Intensity", "Pace Range (min/km)", "Objective"])
         st.table(df_zones)
         
-        # PDF
         st.markdown("---")
-        st.subheader("📄 รายงานผล (PDF)")
+        st.subheader("💾 บันทึกผลลัพธ์")
+        
+        # สร้าง Columns สำหรับวางปุ่มคู่กัน
+        col_pdf, col_jpg = st.columns(2)
+
+        # 1. PDF Button
         pdf_bytes = create_pdf(student_name, test_date, cs, dp, runner_type, df_zones, advice_text)
         
         if pdf_bytes:
-            st.download_button(
-                label="📥 ดาวน์โหลดรายงาน PDF (ภาษาไทย)",
+            col_pdf.download_button(
+                label="📄 ดาวน์โหลดรายงาน PDF",
                 data=bytes(pdf_bytes),
                 file_name=f"Report_{student_name}.pdf",
                 mime="application/pdf"
             )
+            
+        # 2. JPG Button (เพิ่มใหม่)
+        jpg_bytes = create_image_card(student_name, test_date, cs, dp, runner_type, df_zones, advice_text)
+        
+        if jpg_bytes:
+            col_jpg.download_button(
+                label="🖼️ ดาวน์โหลดรูปภาพ JPG",
+                data=jpg_bytes,
+                file_name=f"Card_{student_name}.jpg",
+                mime="image/jpeg"
+            )
 
     except ZeroDivisionError:
         st.error("Error: เวลาทดสอบต้องไม่เท่ากัน")
-st.info("👈 กรุณากรอกข้อมูลที่แถบด้านซ้าย แล้วกดปุ่ม 'คำนวณผลลัพธ์'")
+else:
+    st.info("👈 กรุณากรอกข้อมูลที่แถบด้านซ้าย แล้วกดปุ่ม 'คำนวณผลลัพธ์'")
