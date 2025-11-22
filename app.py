@@ -9,58 +9,60 @@ import textwrap
 # --- 1. ตั้งค่าหน้าเว็บ ---
 st.set_page_config(page_title="Coach Kung: CS Calculator", page_icon="🏃‍♂️")
 
-# --- ฟังก์ชันเสริม: วาดรูป JPG (แก้ไขให้เป็น A4 เป๊ะ) ---
+# --- ฟังก์ชันเสริม: วาดรูป JPG (จัดหน้าใหม่ A4) ---
 def create_image_card(student_name, test_date, cs, dp, runner_type, zones_df, advice_text):
     # 1. ตั้งค่ากระดาษ A4 (8.27 x 11.69 นิ้ว)
-    fig, ax = plt.subplots(figsize=(8.27, 11.69)) # A4 Size
-    
-    # ล็อกพื้นที่ให้เต็มแผ่น ไม่ให้มีขอบขาวเกินจำเป็น
+    fig, ax = plt.subplots(figsize=(8.27, 11.69)) 
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-    ax.axis('off') # ปิดแกน
+    ax.axis('off')
 
     # 2. โหลดฟอนต์ไทย
     try:
-        # ปรับขนาดฟอนต์ให้เหมาะกับ A4
-        title_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=28, weight='bold')
-        header_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=22, weight='bold')
-        normal_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=18)
-        small_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=14)
+        title_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=30, weight='bold')
+        header_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=24, weight='bold')
+        normal_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=20)
+        small_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=16)
     except:
         st.warning("⚠️ ไม่พบฟอนต์ THSarabunNew.ttf")
         return None
 
-    # 3. วาดส่วนหัว (Header) - ขยับตำแหน่งให้สวยงามบน A4
-    plt.text(0.5, 0.92, "รายงานผลการทดสอบ: Critical Speed Profile", ha='center', fontproperties=title_font, color='#2c3e50')
-    plt.text(0.5, 0.88, f"นักกีฬา: {student_name} | วันที่: {str(test_date)}", ha='center', fontproperties=header_font, color='#7f8c8d')
-    plt.plot([0.1, 0.9], [0.86, 0.86], color='#bdc3c7', lw=2)
+    # --- ส่วนที่ 1: Header (บนสุด) ---
+    plt.text(0.5, 0.93, "รายงานผลการทดสอบ: Critical Speed Profile", ha='center', fontproperties=title_font, color='#2c3e50')
+    plt.text(0.5, 0.89, f"นักกีฬา: {student_name} | วันที่: {str(test_date)}", ha='center', fontproperties=header_font, color='#7f8c8d')
+    plt.plot([0.1, 0.87], [0.87, 0.87], color='#bdc3c7', lw=2)
 
-    # 4. วาดค่า Metrics
-    plt.text(0.1, 0.82, "1. Physiological Metrics (ค่าสมรรถภาพ)", fontproperties=header_font, color='#2980b9')
+    # --- ส่วนที่ 2: Metrics (ใต้ Header) ---
+    plt.text(0.1, 0.83, "1. Physiological Metrics (ค่าสมรรถภาพ)", fontproperties=header_font, color='#2980b9')
     metrics_text = (
         f"• Critical Speed (CS): {cs:.2f} m/s\n"
         f"• Anaerobic Capacity (D'): {dp:.0f} m\n"
         f"• Runner Type: {runner_type}"
     )
-    plt.text(0.12, 0.73, metrics_text, fontproperties=normal_font, va='top', linespacing=1.6)
+    plt.text(0.12, 0.74, metrics_text, fontproperties=normal_font, va='top', linespacing=1.6)
 
-    # 5. วาดตารางโซนซ้อม
+    # --- ส่วนที่ 3: ตาราง (ตรงกลาง) ---
     plt.text(0.1, 0.63, "2. Training Zones (โซนซ้อม)", fontproperties=header_font, color='#2980b9')
     
+    # *แก้ปัญหา Emoji เป็นสี่เหลี่ยม*: ลบ Emoji ออกเฉพาะตอนวาดกราฟ
+    plot_df = zones_df.copy()
+    plot_df['Zone'] = plot_df['Zone'].str.replace('⚠️', '').str.replace('📍', '')
+    plot_df['Pace Range (min/km)'] = plot_df['Pace Range (min/km)'].str.replace('📍', '')
+
     cell_text = []
-    for i, row in zones_df.iterrows():
+    for i, row in plot_df.iterrows():
         cell_text.append([row['Zone'], row['Intensity'], row['Pace Range (min/km)'], row['Objective']])
     
     col_labels = ["Zone", "Intensity", "Pace", "Objective"]
     
-    # สร้างตาราง (ปรับตำแหน่งให้พอดี A4)
+    # จัดตำแหน่งตาราง (bbox=[left, bottom, width, height])
+    # ปรับ bottom=0.35 เพื่อให้ตารางอยู่ตรงกลางหน้าพอดี ไม่ทับส่วนล่าง
     table = plt.table(cellText=cell_text, colLabels=col_labels, 
                       loc='center', cellLoc='left', colLoc='center',
-                      bbox=[0.1, 0.32, 0.8, 0.28]) # [left, bottom, width, height]
+                      bbox=[0.1, 0.35, 0.8, 0.25]) 
     
     table.auto_set_font_size(False)
-    table.set_fontsize(12)
+    table.set_fontsize(14)
     
-    # ปรับฟอนต์ตาราง
     for key, cell in table.get_celld().items():
         cell.set_text_props(fontproperties=small_font)
         cell.set_edgecolor('#bdc3c7')
@@ -69,24 +71,24 @@ def create_image_card(student_name, test_date, cs, dp, runner_type, zones_df, ad
             cell.set_facecolor('#2980b9')
             cell.set_height(0.04)
 
-    # 6. วาดคำแนะนำโค้ช
-    plt.text(0.1, 0.25, "3. Coach's Advice (คำแนะนำ)", fontproperties=header_font, color='#2980b9')
+    # --- ส่วนที่ 4: คำแนะนำ (ด้านล่าง) ---
+    plt.text(0.1, 0.28, "3. Coach's Advice (คำแนะนำ)", fontproperties=header_font, color='#2980b9')
     
-    wrapper = textwrap.TextWrapper(width=65) # บีบข้อความให้แคบลงนิดนึงสำหรับ A4 แนวตั้ง
+    wrapper = textwrap.TextWrapper(width=65)
     wrapped_advice = wrapper.fill(text=advice_text)
-    plt.text(0.12, 0.21, wrapped_advice, fontproperties=normal_font, va='top', linespacing=1.4)
+    # วางข้อความที่ตำแหน่ง y=0.24 (ใต้หัวข้อคำแนะนำ)
+    plt.text(0.12, 0.24, wrapped_advice, fontproperties=normal_font, va='top', linespacing=1.4)
 
-    # 7. Footer
+    # --- ส่วนที่ 5: Footer (ล่างสุด) ---
     plt.text(0.9, 0.03, "Designed by Coach Kung", ha='right', fontproperties=small_font, color='#95a5a6', style='italic')
 
-    # 8. Save ลง Buffer (สำคัญ: ลบ bbox_inches='tight' ออก เพื่อรักษาขนาด A4)
     img_buffer = io.BytesIO()
-    plt.savefig(img_buffer, format='jpg', dpi=150) # ลบ bbox_inches ออกแล้ว
+    plt.savefig(img_buffer, format='jpg', dpi=150)
     img_buffer.seek(0)
     return img_buffer
 
 
-# --- 2. ฟังก์ชันสร้าง PDF (เพิ่ม Footer) ---
+# --- 2. ฟังก์ชันสร้าง PDF (เหมือนเดิม) ---
 def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_text):
     class PDF(FPDF):
         def footer(self):
@@ -95,7 +97,6 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
             self.cell(0, 10, "Designed by Coach Kung", align="R")
 
     pdf = PDF(orientation="P", unit="mm", format="A4")
-    
     try:
         pdf.add_font('Thai', '', 'THSarabunNew.ttf')
     except FileNotFoundError:
@@ -103,7 +104,7 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
         return None
 
     pdf.add_page()
-
+    
     # Header
     pdf.set_font('Thai', '', 22)
     pdf.cell(0, 12, text=f"รายงานผลการทดสอบ: Critical Speed Profile", align='C', new_x="LMARGIN", new_y="NEXT")
@@ -122,7 +123,7 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
     pdf.cell(0, 8, text=f"Runner Type: {runner_type}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
-    # Zones Table
+    # Table
     pdf.set_fill_color(230, 240, 255)
     pdf.set_font('Thai', '', 18)
     pdf.cell(0, 10, text="2. Personalized Training Zones (โซนซ้อม)", fill=True, new_x="LMARGIN", new_y="NEXT")
@@ -132,7 +133,6 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
     pdf.set_fill_color(240, 240, 240)
     w_cols = [35, 25, 45, 85]
     headers = ["Zone", "Intensity", "Pace Range", "Objective"]
-    
     for i, h in enumerate(headers):
         pdf.cell(w_cols[i], 8, h, border=1, fill=True, align='C')
     pdf.ln()
@@ -143,7 +143,7 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
         pdf.cell(w_cols[2], 8, str(row['Pace Range (min/km)']), border=1, align='C')
         pdf.cell(w_cols[3], 8, str(row['Objective']), border=1, new_x="LMARGIN", new_y="NEXT")
 
-    # Coach Advice
+    # Advice
     pdf.ln(8)
     pdf.set_font('Thai', '', 18)
     pdf.cell(0, 10, text="Coach's Recommendation (คำแนะนำการฝึกซ้อม):", new_x="LMARGIN", new_y="NEXT")
@@ -152,34 +152,25 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
 
     return pdf.output()
 
-# --- 3. ฟังก์ชัน Logic คำแนะนำ ---
+# --- 3. Logic คำแนะนำ ---
 def get_coach_advice(runner_type, cs_pace, dp):
     if "Diesel" in runner_type:
         return (
-            f"📌 วิเคราะห์: คุณเป็นนักวิ่งสายอึด (Diesel) มีเครื่องยนต์ Aerobic ที่แข็งแกร่ง ยืนระยะได้ดีมาก "
-            f"แต่มีถังพลังงานสำรอง (D') น้อย ({dp:.0f}m) ทำให้เร่งความเร็วฉับพลัน (Surge) หรือสปรินต์หน้าเส้นได้ไม่ดีนัก\n\n"
-            f"🏋️ แผนการซ้อม: จุดอ่อนคือ Speed & Power ควรเสริมคอร์ทระยะสั้นที่เร็วและแรง "
-            f"(เช่น 200m-400m @Zone 6) พักยาวๆ เพื่อขยายขนาดถัง D' ให้ใหญ่ขึ้น และซ้อม Hill Repeats เพื่อสร้างกำลังขา\n\n"
-            f"🏁 กลยุทธ์วันแข่ง: ห้ามกระชาก! คุณต้องวิ่งแบบ Even Pace (ความเร็วคงที่) เหมือนเครื่องจักร "
-            f"อย่าหลงไปแข่งสปรินต์กับใครช่วงต้นเกม รักษาความเร็วระดับ Threshold ไว้ แล้วใช้ความอึดบดคู่แข่งช่วงท้าย"
+            f"📌 วิเคราะห์: เป็นนักวิ่งสายอึด (Diesel) Aerobic Base แข็งแกร่ง แต่ D' น้อย ({dp:.0f}m)\n"
+            f"🏋️ แผนซ้อม: เสริมคอร์ทสั้น (Speed) เพื่อขยายถัง D' และซ้อม Hill Repeats\n"
+            f"🏁 วันแข่ง: วิ่ง Even Pace ห้ามกระชาก รักษาความเร็ว Threshold ไว้แล้วบดช่วงท้าย"
         )
     elif "Turbo" in runner_type:
         return (
-            f"📌 วิเคราะห์: คุณเป็นนักวิ่งสายสปีด (Turbo) มีถังพลังงานสำรอง (D') ใหญ่มาก ({dp:.0f}m) "
-            f"มีความเร็วต้นจัดจ้านและลูกฮึดหน้าเส้นที่น่ากลัว แต่ฐาน Aerobic (CS) อาจยังไม่กว้างพอ ทำให้หมดแรงไวถ้ายืดระยะ\n\n"
-            f"🏋️ แผนการซ้อม: ต้องอุดรอยรั่วเรื่องความอึด เน้นซ้อม Tempo และ Threshold (Zone 3-4) "
-            f"แช่ยาวๆ 20-40 นาที เพื่อดันเพดาน CS ให้สูงขึ้น และลดปริมาณการซ้อม Speed ลง เพราะคุณมีของดีอยู่แล้ว\n\n"
-            f"🏁 กลยุทธ์วันแข่ง: ใจเย็นๆ ช่วงต้นเกม! คุณจะรู้สึกว่าวิ่งเร็วแล้วไม่เหนื่อย (เพราะใช้ถัง D' วิ่ง) "
-            f"แต่ถ้าเพลินจนถังหมด คุณจะชนกำแพงทันที ให้คุม Pace ช่วงแรกให้ช้ากว่าที่รู้สึกสบายเล็กน้อย แล้วเก็บ D' ไว้ระเบิดพลังแซงช่วง 800 เมตรสุดท้าย"
+            f"📌 วิเคราะห์: เป็นนักวิ่งสายสปีด (Turbo) ถัง D' ใหญ่ ({dp:.0f}m) มีลูกฮึดดี แต่ฐาน Aerobic ยังไม่กว้าง\n"
+            f"🏋️ แผนซ้อม: เน้น Tempo/Threshold แช่ยาวๆ เพื่อดันเพดาน CS ลดการซ้อม Speed ลง\n"
+            f"🏁 วันแข่ง: ใจเย็นช่วงต้น! เก็บ D' ไว้ระเบิดพลัง 800m สุดท้าย อย่าเพลินจนถังหมด"
         )
     else:
         return (
-            f"📌 วิเคราะห์: คุณเป็นนักวิ่งสมดุล (Hybrid) มีความยืดหยุ่นสูง ปรับตัวได้ดีทั้งเกมเร็วและเกมอึด "
-            f"ค่า D' ของคุณ ({dp:.0f}m) อยู่ในเกณฑ์มาตรฐาน ทำให้สามารถวางแผนการซ้อมได้หลากหลายที่สุด\n\n"
-            f"🏋️ แผนการซ้อม: ใช้ระบบ Periodization ช่วงต้นฤดูกาลเน้นสร้างฐาน (Zone 2-3) "
-            f"ช่วงกลางเน้น Threshold (Zone 4) และช่วงท้ายก่อนแข่งค่อยเติม Speed (Zone 5-6) ตามระยะที่จะลงแข่ง\n\n"
-            f"🏁 กลยุทธ์วันแข่ง: คุณเลือกเล่นได้ตามสถานการณ์ สามารถเกาะกลุ่มนำไปเรื่อยๆ (Drafting) "
-            f"แล้วหาจังหวะฉีกหนีเมื่อคู่แข่งเริ่มล้า หรือจะวิ่งคุมโซนตัวเองเพื่อทำ New PB ก็ทำได้ดีทั้งคู่"
+            f"📌 วิเคราะห์: เป็นนักวิ่งสมดุล (Hybrid) D' มาตรฐาน ({dp:.0f}m) ปรับเปลี่ยนแผนได้หลากหลาย\n"
+            f"🏋️ แผนซ้อม: ช่วงต้นเน้น Base ช่วงกลางเน้น Threshold ช่วงท้ายเติม Speed\n"
+            f"🏁 วันแข่ง: เกาะกลุ่ม (Drafting) ได้ดี หาจังหวะฉีกหนีเมื่อคู่แข่งล้า"
         )
 
 # --- 4. ส่วนแสดงผลเว็บ ---
@@ -218,15 +209,12 @@ if calculate_btn:
         dp = d2 - (cs * t2)
         cs_pace = get_pace(cs)
 
-        # Type
         runner_type = "Hybrid (สมดุล)"
         if dp < 150: runner_type = "Diesel (Aerobic Engine)"
         elif dp > 250: runner_type = "Turbo (Anaerobic Power)"
         
-        # Advice
         advice_text = get_coach_advice(runner_type, cs_pace, dp)
 
-        # Display
         st.subheader(f"📊 ผลวิเคราะห์: {student_name}")
         col1, col2, col3 = st.columns(3)
         col1.metric("Critical Speed", f"{cs:.2f} m/s", f"Pace {cs_pace}")
@@ -254,7 +242,7 @@ if calculate_btn:
         
         col_pdf, col_jpg = st.columns(2)
 
-        # 1. PDF Button
+        # PDF
         pdf_bytes = create_pdf(student_name, test_date, cs, dp, runner_type, df_zones, advice_text)
         if pdf_bytes:
             col_pdf.download_button(
@@ -264,7 +252,7 @@ if calculate_btn:
                 mime="application/pdf"
             )
             
-        # 2. JPG Button (Fixed A4 Size)
+        # JPG
         jpg_bytes = create_image_card(student_name, test_date, cs, dp, runner_type, df_zones, advice_text)
         if jpg_bytes:
             col_jpg.download_button(
