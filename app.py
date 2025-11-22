@@ -9,98 +9,93 @@ import textwrap
 # --- 1. ตั้งค่าหน้าเว็บ ---
 st.set_page_config(page_title="Coach Kung: CS Calculator", page_icon="🏃‍♂️")
 
-# --- ฟังก์ชันเสริม: วาดรูป JPG (เพิ่มใหม่) ---
+# --- ฟังก์ชันเสริม: วาดรูป JPG (แก้ไขให้เป็น A4 เป๊ะ) ---
 def create_image_card(student_name, test_date, cs, dp, runner_type, zones_df, advice_text):
-    # 1. ตั้งค่ากระดาษวาดรูป (แนวตั้ง)
-    fig, ax = plt.subplots(figsize=(10, 14))
-    ax.axis('off') # ปิดแกน X Y
+    # 1. ตั้งค่ากระดาษ A4 (8.27 x 11.69 นิ้ว)
+    fig, ax = plt.subplots(figsize=(8.27, 11.69)) # A4 Size
+    
+    # ล็อกพื้นที่ให้เต็มแผ่น ไม่ให้มีขอบขาวเกินจำเป็น
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+    ax.axis('off') # ปิดแกน
 
-    # 2. โหลดฟอนต์ไทย (ใช้ THSarabunNew.ttf ตัวเดียวกับ PDF)
+    # 2. โหลดฟอนต์ไทย
     try:
-        # ฟอนต์หัวข้อ (หนา/ใหญ่)
-        title_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=30, weight='bold')
-        header_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=24, weight='bold')
-        normal_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=20)
-        small_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=16)
+        # ปรับขนาดฟอนต์ให้เหมาะกับ A4
+        title_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=28, weight='bold')
+        header_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=22, weight='bold')
+        normal_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=18)
+        small_font = font_manager.FontProperties(fname='THSarabunNew.ttf', size=14)
     except:
-        st.warning("⚠️ ไม่พบฟอนต์ THSarabunNew.ttf (รูปภาพอาจไม่มีภาษาไทย)")
+        st.warning("⚠️ ไม่พบฟอนต์ THSarabunNew.ttf")
         return None
 
-    # 3. วาดส่วนหัว (Header)
-    plt.text(0.5, 0.95, "รายงานผลการทดสอบ: Critical Speed Profile", ha='center', fontproperties=title_font, color='#2c3e50')
-    plt.text(0.5, 0.91, f"นักกีฬา: {student_name} | วันที่: {str(test_date)}", ha='center', fontproperties=header_font, color='#7f8c8d')
-    plt.plot([0.1, 0.9], [0.89, 0.89], color='#bdc3c7', lw=3) # เส้นขีดคั่น
+    # 3. วาดส่วนหัว (Header) - ขยับตำแหน่งให้สวยงามบน A4
+    plt.text(0.5, 0.92, "รายงานผลการทดสอบ: Critical Speed Profile", ha='center', fontproperties=title_font, color='#2c3e50')
+    plt.text(0.5, 0.88, f"นักกีฬา: {student_name} | วันที่: {str(test_date)}", ha='center', fontproperties=header_font, color='#7f8c8d')
+    plt.plot([0.1, 0.9], [0.86, 0.86], color='#bdc3c7', lw=2)
 
     # 4. วาดค่า Metrics
-    plt.text(0.1, 0.85, "1. Physiological Metrics (ค่าสมรรถภาพ)", fontproperties=header_font, color='#2980b9')
+    plt.text(0.1, 0.82, "1. Physiological Metrics (ค่าสมรรถภาพ)", fontproperties=header_font, color='#2980b9')
     metrics_text = (
         f"• Critical Speed (CS): {cs:.2f} m/s\n"
         f"• Anaerobic Capacity (D'): {dp:.0f} m\n"
         f"• Runner Type: {runner_type}"
     )
-    plt.text(0.12, 0.75, metrics_text, fontproperties=normal_font, va='top', linespacing=1.8)
+    plt.text(0.12, 0.73, metrics_text, fontproperties=normal_font, va='top', linespacing=1.6)
 
     # 5. วาดตารางโซนซ้อม
-    plt.text(0.1, 0.62, "2. Training Zones (โซนซ้อม)", fontproperties=header_font, color='#2980b9')
+    plt.text(0.1, 0.63, "2. Training Zones (โซนซ้อม)", fontproperties=header_font, color='#2980b9')
     
-    # เตรียมข้อมูลลงตาราง
     cell_text = []
     for i, row in zones_df.iterrows():
         cell_text.append([row['Zone'], row['Intensity'], row['Pace Range (min/km)'], row['Objective']])
     
     col_labels = ["Zone", "Intensity", "Pace", "Objective"]
     
-    # สร้างตาราง
+    # สร้างตาราง (ปรับตำแหน่งให้พอดี A4)
     table = plt.table(cellText=cell_text, colLabels=col_labels, 
                       loc='center', cellLoc='left', colLoc='center',
-                      bbox=[0.1, 0.28, 0.8, 0.32]) # [left, bottom, width, height]
+                      bbox=[0.1, 0.32, 0.8, 0.28]) # [left, bottom, width, height]
     
     table.auto_set_font_size(False)
-    table.set_fontsize(14)
+    table.set_fontsize(12)
     
-    # ปรับฟอนต์ในตารางให้เป็นไทย
+    # ปรับฟอนต์ตาราง
     for key, cell in table.get_celld().items():
         cell.set_text_props(fontproperties=small_font)
-        if key[0] == 0: # หัวตาราง
+        cell.set_edgecolor('#bdc3c7')
+        if key[0] == 0:
             cell.set_text_props(fontproperties=header_font, color='white')
             cell.set_facecolor('#2980b9')
-            cell.set_height(0.05)
+            cell.set_height(0.04)
 
     # 6. วาดคำแนะนำโค้ช
-    plt.text(0.1, 0.22, "3. Coach's Advice (คำแนะนำ)", fontproperties=header_font, color='#2980b9')
+    plt.text(0.1, 0.25, "3. Coach's Advice (คำแนะนำ)", fontproperties=header_font, color='#2980b9')
     
-    # ตัดคำให้อยู่ในบรรทัด (Wrap text)
-    wrapper = textwrap.TextWrapper(width=75)
+    wrapper = textwrap.TextWrapper(width=65) # บีบข้อความให้แคบลงนิดนึงสำหรับ A4 แนวตั้ง
     wrapped_advice = wrapper.fill(text=advice_text)
-    plt.text(0.12, 0.18, wrapped_advice, fontproperties=normal_font, va='top', linespacing=1.5)
+    plt.text(0.12, 0.21, wrapped_advice, fontproperties=normal_font, va='top', linespacing=1.4)
 
-    # 7. Footer (Designed by Coach Kung)
-    plt.text(0.9, 0.02, "Designed by Coach Kung", ha='right', fontproperties=small_font, color='#95a5a6', style='italic')
+    # 7. Footer
+    plt.text(0.9, 0.03, "Designed by Coach Kung", ha='right', fontproperties=small_font, color='#95a5a6', style='italic')
 
-    # 8. Save ลง Buffer
+    # 8. Save ลง Buffer (สำคัญ: ลบ bbox_inches='tight' ออก เพื่อรักษาขนาด A4)
     img_buffer = io.BytesIO()
-    plt.savefig(img_buffer, format='jpg', dpi=150, bbox_inches='tight')
+    plt.savefig(img_buffer, format='jpg', dpi=150) # ลบ bbox_inches ออกแล้ว
     img_buffer.seek(0)
     return img_buffer
 
 
-# --- 2. ฟังก์ชันสร้าง PDF (ของเดิมที่คุณให้มา) ---
+# --- 2. ฟังก์ชันสร้าง PDF (เพิ่ม Footer) ---
 def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_text):
-    
-    # สร้าง Custom Class เพื่อทำ Footer (สิ่งที่เพิ่มมาใหม่)
     class PDF(FPDF):
         def footer(self):
-            # เลื่อนตำแหน่งไปที่ 1.5 cm จากขอบล่าง
             self.set_y(-15)
-            # ใช้ฟอนต์ Arial ตัวเอียง ขนาด 8 (ดู Inter หน่อย)
             self.set_font("Arial", "I", 8)
-            # พิมพ์ข้อความชิดขวา (align='R')
             self.cell(0, 10, "Designed by Coach Kung", align="R")
 
-    # เรียกใช้ Class ใหม่ที่เราเพิ่งสร้าง
     pdf = PDF(orientation="P", unit="mm", format="A4")
     
-    # ลงทะเบียนฟอนต์ภาษาไทย
     try:
         pdf.add_font('Thai', '', 'THSarabunNew.ttf')
     except FileNotFoundError:
@@ -109,12 +104,9 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
 
     pdf.add_page()
 
-    # --- ส่วนเนื้อหา (เหมือนเดิม) ---
-    
     # Header
     pdf.set_font('Thai', '', 22)
     pdf.cell(0, 12, text=f"รายงานผลการทดสอบ: Critical Speed Profile", align='C', new_x="LMARGIN", new_y="NEXT")
-    
     pdf.set_font('Thai', '', 16)
     pdf.cell(0, 10, text=f"นักกีฬา: {student_name} | วันที่: {test_date}", align='C', new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
@@ -136,7 +128,6 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
     pdf.cell(0, 10, text="2. Personalized Training Zones (โซนซ้อม)", fill=True, new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
     
-    # Table Header
     pdf.set_font_size(14)
     pdf.set_fill_color(240, 240, 240)
     w_cols = [35, 25, 45, 85]
@@ -146,8 +137,6 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
         pdf.cell(w_cols[i], 8, h, border=1, fill=True, align='C')
     pdf.ln()
 
-    # Table Rows
-    pdf.set_font_size(14)
     for index, row in zones_df.iterrows():
         pdf.cell(w_cols[0], 8, str(row['Zone']), border=1)
         pdf.cell(w_cols[1], 8, str(row['Intensity']), border=1, align='C')
@@ -158,13 +147,12 @@ def create_pdf(student_name, test_date, cs, dp, runner_type, zones_df, advice_te
     pdf.ln(8)
     pdf.set_font('Thai', '', 18)
     pdf.cell(0, 10, text="Coach's Recommendation (คำแนะนำการฝึกซ้อม):", new_x="LMARGIN", new_y="NEXT")
-    
     pdf.set_font('Thai', '', 14)
     pdf.multi_cell(0, 7, text=advice_text)
 
     return pdf.output()
 
-# --- 3. ฟังก์ชันคำแนะนำโค้ช ---
+# --- 3. ฟังก์ชัน Logic คำแนะนำ ---
 def get_coach_advice(runner_type, cs_pace, dp):
     if "Diesel" in runner_type:
         return (
@@ -250,13 +238,13 @@ if calculate_btn:
         # Zones
         st.subheader("🎯 โซนซ้อมแนะนำ")
         zones_data = [
-            ["Zone 1 Recovery", "< 70%", f"> {get_pace(cs*0.70)}", "คลายกรด / Active Rest"],
-            ["Zone 2 Easy", "70-80%", f"{get_pace(cs*0.70)} - {get_pace(cs*0.80)}", "สร้างฐาน Aerobic / เก็บระยะ"],
-            ["Zone 3 Steady", "80-90%", f"{get_pace(cs*0.80)} - {get_pace(cs*0.90)}", "ความทนทาน / Marathon Pace"],
-            ["Zone 4 Threshold", "90-100%", f"{get_pace(cs*0.90)} - {get_pace(cs*1.00)}", "Tempo / ดันเพดานความเหนื่อย"],
-            ["⚠️ CS Line", "100%", f"📍 {cs_pace}", "Red Line (ขีดจำกัดร่างกาย)"],
-            ["Zone 5 VO2max", "100-110%", f"{get_pace(cs*1.00)} - {get_pace(cs*1.10)}", "Interval / กระตุ้นหัวใจ"],
-            ["Zone 6 Anaerobic", "> 110%", f"< {get_pace(cs*1.10)}", "Speed / พัฒนาความเร็วสูงสุด"]
+            ["Zone 1 Recovery", "< 70%", f"> {get_pace(cs*0.70)}", "Active Rest"],
+            ["Zone 2 Easy", "70-80%", f"{get_pace(cs*0.70)} - {get_pace(cs*0.80)}", "Aerobic Base"],
+            ["Zone 3 Steady", "80-90%", f"{get_pace(cs*0.80)} - {get_pace(cs*0.90)}", "Marathon Pace"],
+            ["Zone 4 Threshold", "90-100%", f"{get_pace(cs*0.90)} - {get_pace(cs*1.00)}", "Tempo Run"],
+            ["⚠️ CS Line", "100%", f"📍 {cs_pace}", "Red Line"],
+            ["Zone 5 VO2max", "100-110%", f"{get_pace(cs*1.00)} - {get_pace(cs*1.10)}", "Interval"],
+            ["Zone 6 Anaerobic", "> 110%", f"< {get_pace(cs*1.10)}", "Speed Work"]
         ]
         df_zones = pd.DataFrame(zones_data, columns=["Zone", "Intensity", "Pace Range (min/km)", "Objective"])
         st.table(df_zones)
@@ -264,12 +252,10 @@ if calculate_btn:
         st.markdown("---")
         st.subheader("💾 บันทึกผลลัพธ์")
         
-        # สร้าง Columns สำหรับวางปุ่มคู่กัน
         col_pdf, col_jpg = st.columns(2)
 
         # 1. PDF Button
         pdf_bytes = create_pdf(student_name, test_date, cs, dp, runner_type, df_zones, advice_text)
-        
         if pdf_bytes:
             col_pdf.download_button(
                 label="📄 ดาวน์โหลดรายงาน PDF",
@@ -278,9 +264,8 @@ if calculate_btn:
                 mime="application/pdf"
             )
             
-        # 2. JPG Button (เพิ่มใหม่)
+        # 2. JPG Button (Fixed A4 Size)
         jpg_bytes = create_image_card(student_name, test_date, cs, dp, runner_type, df_zones, advice_text)
-        
         if jpg_bytes:
             col_jpg.download_button(
                 label="🖼️ ดาวน์โหลดรูปภาพ JPG",
