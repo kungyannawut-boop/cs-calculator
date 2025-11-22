@@ -172,9 +172,9 @@ if calculate_btn:
         st.subheader("🎯 โซนซ้อมแนะนำ")
         zones_data = [
             ["Zone 1 Recovery", "< 70%", f"> {get_pace(cs*0.70)}", "คลายกรด / Active Rest"],
-            ["Zone 2 Easy", "70-80%", f"{get_pace(cs*0.70)} - {get_pace(cs*0.80)}", "สร้างฐาน Aerobic"],
-            ["Zone 3 Steady", "80-90%", f"{get_pace(cs*0.80)} - {get_pace(cs*0.90)}", "Marathon Pace"],
-            ["Zone 4 Threshold", "90-100%", f"{get_pace(cs*0.90)} - {get_pace(cs*1.00)}", "Tempo / ดันเพดาน"],
+            ["Zone 2 Easy", "70-80%", f"{get_pace(cs*0.70)} - {get_pace(cs*0.80)}", "สร้างฐาน Aerobic / เก็บระยะ"],
+            ["Zone 3 Steady", "80-90%", f"{get_pace(cs*0.80)} - {get_pace(cs*0.90)}", "ความทนทาน / Marathon Pace"],
+            ["Zone 4 Threshold", "90-100%", f"{get_pace(cs*0.90)} - {get_pace(cs*1.00)}", "Tempo / ดันเพดานความเหนื่อย"],
             ["⚠️ CS Line", "100%", f"📍 {cs_pace}", "Red Line (ขีดจำกัดร่างกาย)"],
             ["Zone 5 VO2max", "100-110%", f"{get_pace(cs*1.00)} - {get_pace(cs*1.10)}", "Interval / กระตุ้นหัวใจ"],
             ["Zone 6 Anaerobic", "> 110%", f"< {get_pace(cs*1.10)}", "Speed / พัฒนาความเร็วสูงสุด"]
